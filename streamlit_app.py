@@ -15,8 +15,8 @@ months = [
 # Income categories (Updated: "Other Income" is now "OI")
 income_categories = ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "OI"]
 
-# Exclude "CC", "Sales Tax", "Fuel Gallons" from income totals and only count 5% of "Lottery" and "Lotto"
-income_for_total = ["Taxable", "Non-tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Rebates", "ATM", "OI"]  # Exclude "CC", "Sales Tax", "Fuel Gallons"
+# Exclude "CC", "Sales Tax", "Fuel Gallons", "FS" from income totals and only count 5% of "Lottery" and "Lotto"
+income_for_total = ["Taxable", "Non-tax", "Lottery", "Lotto", "Fuel Sales", "Rebates", "ATM", "OI"]  # Exclude "CC", "Sales Tax", "Fuel Gallons", "FS"
 
 # Expense categories
 expense_categories = [
@@ -48,12 +48,12 @@ if month_selected not in st.session_state['data'][year_selected]:
         })
     }
 
-# Function to calculate totals excluding CC, Sales Tax, Fuel Gallons, and counting only 5% of Lottery and Lotto
+# Function to calculate totals excluding CC, Sales Tax, Fuel Gallons, FS, and counting only 5% of Lottery and Lotto
 def calculate_income_totals(df_income):
     df_totals = df_income.sum(axis=0, numeric_only=True)
     df_totals["Lottery"] = df_totals["Lottery"] * 0.05  # Only 5% of Lottery sales as income
     df_totals["Lotto"] = df_totals["Lotto"] * 0.05  # Only 5% of Lotto sales as income
-    return df_totals[income_for_total]  # Exclude CC, Sales Tax, Fuel Gallons
+    return df_totals[income_for_total]  # Exclude CC, Sales Tax, Fuel Gallons, FS
 
 # Tabs for different sections: Income, Expenses, Summary, and Yearly Summary
 tab = st.tabs(["Income", "Expenses", "Summary", "Yearly Summary"])
@@ -123,9 +123,9 @@ with tab[2]:
     st.subheader("Detailed Income Categories")
     st.write(income_totals)
 
-    # Display the CC, Sales Tax, Fuel Gallons as reference
-    st.subheader("Reference Numbers (CC, Sales Tax, Fuel Gallons)")
-    st.write(df_income[["CC", "Sales Tax", "Fuel Gallons"]].sum(axis=0))
+    # Display the CC, Sales Tax, Fuel Gallons, FS as reference
+    st.subheader("Reference Numbers (CC, Sales Tax, Fuel Gallons, FS)")
+    st.write(df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0))
 
     # Display the expense categories in detail
     st.subheader("Detailed Expenses")
@@ -147,7 +147,8 @@ with tab[3]:
     reference_totals = pd.DataFrame({
         "CC": [],
         "Sales Tax": [],
-        "Fuel Gallons": []
+        "Fuel Gallons": [],
+        "FS": []
     })
 
     # Loop through all months in the selected year and sum the data
@@ -164,8 +165,8 @@ with tab[3]:
             monthly_expenses = df_expenses["Amount"].sum()
             yearly_expenses += monthly_expenses
 
-            # Add CC, Sales Tax, Fuel Gallons reference numbers
-            monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons"]].sum(axis=0)
+            # Add CC, Sales Tax, Fuel Gallons, FS reference numbers
+            monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0)
             reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
 
     # Calculate yearly totals
@@ -176,6 +177,5 @@ with tab[3]:
     st.subheader("Yearly Income Totals")
     st.write(yearly_income_total)
 
-    # Display reference numbers (CC, Sales Tax, Fuel Gallons)
-    st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons)")
-    st.write(reference_totals)
+    # Display reference numbers (CC, Sales Tax, Fuel Gallons, FS)
+   
