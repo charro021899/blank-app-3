@@ -15,6 +15,9 @@ months = [
 # Income categories (Updated: "Other Income" is now "OI")
 income_categories = ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "OI"]
 
+# Exclude "CC", "Sales Tax", "Fuel Gallons" from income totals and only count 5% of "Lottery" and "Lotto"
+income_for_total = ["Taxable", "Non-tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Rebates", "ATM", "OI"]  # Exclude "CC", "Sales Tax", "Fuel Gallons"
+
 # Expense categories
 expense_categories = [
     "BANK CHARGES", "CC FEES", "CONTRACT LABOR", "OFFICE SUPPLY", "INSURANCE PREMIUMS", 
@@ -45,11 +48,12 @@ if month_selected not in st.session_state['data'][year_selected]:
         })
     }
 
-# Function to calculate totals
-def calculate_totals(df_income, df_expenses):
-    income_totals = df_income.sum(axis=0, numeric_only=True)
-    expenses_totals = df_expenses["Amount"].sum()
-    return income_totals, expenses_totals
+# Function to calculate totals excluding CC, Sales Tax, Fuel Gallons, and counting only 5% of Lottery and Lotto
+def calculate_income_totals(df_income):
+    df_totals = df_income.sum(axis=0, numeric_only=True)
+    df_totals["Lottery"] = df_totals["Lottery"] * 0.05  # Only 5% of Lottery sales as income
+    df_totals["Lotto"] = df_totals["Lotto"] * 0.05  # Only 5% of Lotto sales as income
+    return df_totals[income_for_total]  # Exclude CC, Sales Tax, Fuel Gallons
 
 # Tabs for different sections: Income, Expenses, Summary, and Yearly Summary
 tab = st.tabs(["Income", "Expenses", "Summary", "Yearly Summary"])
@@ -111,9 +115,24 @@ with tab[2]:
     df_income = st.session_state['data'][year_selected][month_selected]["Income"]
     df_expenses = st.session_state['data'][year_selected][month_selected]["Expenses"]
 
-    # Calculate totals
-    income_totals, expenses_totals = calculate_totals(df_income, df_expenses)
+    # Calculate income and expense totals
+    income_totals = calculate_income_totals(df_income)
+    expenses_totals = df_expenses["Amount"].sum()
 
+    # Display the income categories with details
+    st.subheader("Detailed Income Categories")
+    st.write(income_totals)
+
+    # Display the CC, Sales Tax, Fuel Gallons as reference
+    st.subheader("Reference Numbers (CC, Sales Tax, Fuel Gallons)")
+    st.write(df_income[["CC", "Sales Tax", "Fuel Gallons"]].sum(axis=0))
+
+    # Display the expense categories in detail
+    st.subheader("Detailed Expenses")
+    st.write(df_expenses)
+
+    # Financial summary
+    st.subheader("Financial Summary")
     st.write(f"**Total Income:** ${income_totals.sum():,.2f}")
     st.write(f"**Total Expenses:** ${expenses_totals:,.2f}")
     st.write(f"**Net Profit:** ${income_totals.sum() - expenses_totals:,.2f}")
@@ -122,22 +141,14 @@ with tab[2]:
 with tab[3]:
     st.header(f"Yearly Summary for {year_selected}")
 
-    # Initialize totals
-    yearly_income = pd.DataFrame({
-        "Taxable": [],
-        "Non-tax": [],
+    # Initialize totals for yearly summary
+    yearly_income = pd.DataFrame({category: [] for category in income_for_total})
+    yearly_expenses = 0
+    reference_totals = pd.DataFrame({
         "CC": [],
         "Sales Tax": [],
-        "FS": [],
-        "Lottery": [],
-        "Lotto": [],
-        "Fuel Sales": [],
-        "Fuel Gallons": [],
-        "Rebates": [],
-        "ATM": [],
-        "OI": []
+        "Fuel Gallons": []
     })
-    yearly_expenses = 0
 
     # Loop through all months in the selected year and sum the data
     for month in months:
@@ -146,45 +157,25 @@ with tab[3]:
             df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
 
             # Sum income for the month
-            monthly_income = df_income.sum(axis=0, numeric_only=True)
+            monthly_income = calculate_income_totals(df_income)
             yearly_income = pd.concat([yearly_income, pd.DataFrame([monthly_income])], axis=1)
 
             # Sum expenses for the month
             monthly_expenses = df_expenses["Amount"].sum()
             yearly_expenses += monthly_expenses
 
+            # Add CC, Sales Tax, Fuel Gallons reference numbers
+            monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons"]].sum(axis=0)
+            reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
+
     # Calculate yearly totals
     yearly_income_total = yearly_income.sum(axis=1)
+    reference_totals_total = reference_totals.sum(axis=1)
 
-    # Display yearly totals
+    # Display yearly income totals
     st.subheader("Yearly Income Totals")
     st.write(yearly_income_total)
 
-    st.subheader("Yearly Expenses Total")
-    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
-
-    st.subheader("Yearly Financial Statement")
-    st.write(f"**Total Income:** ${yearly_income_total.sum():,.2f}")
-    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
-    st.write(f"**Net Profit:** ${yearly_income_total.sum() - yearly_expenses:,.2f}")
-
-### SAVE AND LOAD WORK ###
-st.sidebar.header("Save Work")
-# Option to download CSV for income and expenses
-csv_income = df_display_income.to_csv(index=False)
-csv_expenses = df_display_expenses.to_csv(index=False)
-st.sidebar.download_button(label="Download Income CSV", data=csv_income, mime="text/csv", file_name=f"Income_{month_selected}_{year_selected}.csv")
-st.sidebar.download_button(label="Download Expenses CSV", data=csv_expenses, mime="text/csv", file_name=f"Expenses_{month_selected}_{year_selected}.csv")
-
-# Option to upload CSV to restore data
-uploaded_income_file = st.sidebar.file_uploader("Upload Income CSV", type="csv")
-if uploaded_income_file is not None:
-    df_income_uploaded = pd.read_csv(uploaded_income_file)
-    st.session_state['data'][year_selected][month_selected]["Income"] = df_income_uploaded
-    st.success("Income data uploaded successfully!")
-
-uploaded_expense_file = st.sidebar.file_uploader("Upload Expenses CSV", type="csv")
-if uploaded_expense_file is not None:
-    df_expenses_uploaded = pd.read_csv(uploaded_expense_file)
-    st.session_state['data'][year_selected][month_selected]["Expenses"] = df_expenses_uploaded
-    st.success("Expenses data uploaded successfully!")
+    # Display reference numbers (CC, Sales Tax, Fuel Gallons)
+    st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons)")
+    st.write(reference_totals
