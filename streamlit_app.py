@@ -178,4 +178,4 @@ with tab[3]:
 
     # Display reference numbers (CC, Sales Tax, Fuel Gallons)
     st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons)")
-    st.write(reference_totals
+    st.write(reference_totals)
