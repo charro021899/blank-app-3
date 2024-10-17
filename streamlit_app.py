@@ -16,7 +16,7 @@ months = [
 income_categories = ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "OI"]
 
 # Exclude "CC", "Sales Tax", "Fuel Gallons", "FS" from income totals and only count 5% of "Lottery" and "Lotto"
-income_for_total = ["Taxable", "Non-tax", "Lottery", "Lotto", "Fuel Sales", "Rebates", "ATM", "OI"]  # Exclude "CC", "Sales Tax", "Fuel Gallons", "FS"
+income_for_total = ["Taxable", "Non-tax", "Lottery", "Lotto", "Fuel Sales", "Rebates", "ATM", "OI"]
 
 # Expense categories
 expense_categories = [
@@ -178,4 +178,12 @@ with tab[3]:
     st.write(yearly_income_total)
 
     # Display reference numbers (CC, Sales Tax, Fuel Gallons, FS)
-   
+    st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons, FS)")
+    st.write(reference_totals_total)
+
+    # Display yearly expense totals
+    st.subheader("Yearly Expense Totals")
+    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
+
+    # Display yearly financial summary
+    st.subheader
