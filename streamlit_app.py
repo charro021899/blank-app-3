@@ -33,19 +33,8 @@ if month_selected not in st.session_state['data'][year_selected]:
     # Initialize income data
     st.session_state['data'][year_selected][month_selected] = {
         "Income": pd.DataFrame({
-            "Date": [f"{month_selected[:3]} {day}" for day in range(1, 32)],
-            "Taxable": [0]*31,
-            "Non-tax": [0]*31,
-            "CC": [0]*31,
-            "Sales Tax": [0]*31,
-            "FS": [0]*31,
-            "Lottery": [0]*31,
-            "Lotto": [0]*31,
-            "Fuel Sales": [0]*31,
-            "Fuel Gallons": [0]*31,
-            "Rebates": [0]*31,
-            "ATM": [0]*31,
-            "Other Income": [0]*31
+            "Category": ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "Other Income"],
+            **{f"Day {i}": [0]*12 for i in range(1, 32)}  # Create columns for each day
         }),
         "Expenses": pd.DataFrame({
             "Expense": expense_categories,
@@ -66,93 +55,15 @@ with tab[0]:
     st.header(f"Income Data for {month_selected} {year_selected}")
     df_income = st.session_state['data'][year_selected][month_selected]["Income"]
     
-    # Input income data - displayed directly without expandable sections
-    for idx, row in df_income.iterrows():
-        st.write(f"### Date: {month_selected} {idx + 1}, {year_selected}")
-        df_income.at[idx, "Taxable"] = st.number_input(
-            f"Taxable - Day {idx + 1}",
-            min_value=0,
-            value=row["Taxable"],
-            step=100,
-            key=f"taxable_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Non-tax"] = st.number_input(
-            f"Non-tax - Day {idx + 1}",
-            min_value=0,
-            value=row["Non-tax"],
-            step=100,
-            key=f"nontax_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "CC"] = st.number_input(
-            f"CC - Day {idx + 1}",
-            min_value=0,
-            value=row["CC"],
-            step=100,
-            key=f"cc_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Sales Tax"] = st.number_input(
-            f"Sales Tax - Day {idx + 1}",
-            min_value=0,
-            value=row["Sales Tax"],
-            step=100,
-            key=f"sales_tax_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "FS"] = st.number_input(
-            f"FS - Day {idx + 1}",
-            min_value=0,
-            value=row["FS"],
-            step=100,
-            key=f"fs_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Lottery"] = st.number_input(
-            f"Lottery - Day {idx + 1}",
-            min_value=0,
-            value=row["Lottery"],
-            step=100,
-            key=f"lottery_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Lotto"] = st.number_input(
-            f"Lotto - Day {idx + 1}",
-            min_value=0,
-            value=row["Lotto"],
-            step=100,
-            key=f"lotto_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Fuel Sales"] = st.number_input(
-            f"Fuel Sales - Day {idx + 1}",
-            min_value=0,
-            value=row["Fuel Sales"],
-            step=100,
-            key=f"fuel_sales_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Fuel Gallons"] = st.number_input(
-            f"Fuel Gallons - Day {idx + 1}",
-            min_value=0,
-            value=row["Fuel Gallons"],
-            step=10,
-            key=f"fuel_gallons_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Rebates"] = st.number_input(
-            f"Rebates - Day {idx + 1}",
-            min_value=0,
-            value=row["Rebates"],
-            step=100,
-            key=f"rebates_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "ATM"] = st.number_input(
-            f"ATM - Day {idx + 1}",
-            min_value=0,
-            value=row["ATM"],
-            step=100,
-            key=f"atm_{year_selected}_{month_selected}_{idx}"
-        )
-        df_income.at[idx, "Other Income"] = st.number_input(
-            f"Other Income - Day {idx + 1}",
-            min_value=0,
-            value=row["Other Income"],
-            step=100,
-            key=f"other_income_{year_selected}_{month_selected}_{idx}"
-        )
+    # Display day-by-day inputs in row format
+    st.subheader("Input Daily Data")
+    for category in df_income["Category"]:
+        cols = st.columns(31)  # Create 31 columns for the days
+        st.write(f"### {category}")
+        for day in range(1, 32):
+            df_income.at[df_income[df_income["Category"] == category].index[0], f"Day {day}"] = cols[day-1].number_input(
+                f"Day {day}", min_value=0, value=df_income.loc[df_income["Category"] == category, f"Day {day}"].values[0], step=100, key=f"{category}_{day}_{month_selected}_{year_selected}"
+            )
     
     # Update the session state
     st.session_state['data'][year_selected][month_selected]["Income"] = df_income
@@ -160,7 +71,7 @@ with tab[0]:
     # Display the income table with totals
     st.subheader("Income Data Table")
     df_display_income = df_income.copy()
-    df_display_income.loc['Total'] = df_display_income.sum(numeric_only=True)
+    df_display_income["Total"] = df_display_income.sum(axis=1, numeric_only=True)
     st.dataframe(df_display_income)
 
 with tab[1]:
@@ -195,4 +106,73 @@ with tab[2]:
     df_expenses = st.session_state['data'][year_selected][month_selected]["Expenses"]
     
     # Calculate totals
-   
+    income_totals, expenses_totals = calculate_totals(df_income, df_expenses)
+    
+    st.write(f"**Total Income:** ${income_totals.sum():,.2f}")
+    st.write(f"**Total Expenses:** ${expenses_totals:,.2f}")
+    st.write(f"**Net Profit:** ${income_totals.sum() - expenses_totals:,.2f}")
+
+with tab[3]:
+    st.header(f"Yearly Summary for {year_selected}")
+    
+    # Initialize totals
+    yearly_income = pd.DataFrame({
+        "Taxable": [],
+        "Non-tax": [],
+        "CC": [],
+        "Sales Tax": [],
+        "FS": [],
+        "Lottery": [],
+        "Lotto": [],
+        "Fuel Sales": [],
+        "Fuel Gallons": [],
+        "Rebates": [],
+        "ATM": [],
+        "Other Income": []
+    })
+    yearly_expenses = 0
+    
+    for month in months:
+        if month in st.session_state['data'][year_selected]:
+            df_income = st.session_state['data'][year_selected][month]["Income"]
+            df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
+            
+            # Sum income for the month
+            monthly_income = df_income.sum(axis=1, numeric_only=True)
+            yearly_income = pd.concat([yearly_income, monthly_income], axis=1)
+            
+            # Sum expenses for the month
+            monthly_expenses = df_expenses["Amount"].sum()
+            yearly_expenses += monthly_expenses
+    
+    # Calculate yearly totals
+    yearly_income_total = yearly_income.sum(axis=1)
+    
+    # Display yearly totals
+    st.subheader("Yearly Income Totals")
+    st.write(yearly_income_total)
+    
+    st.subheader("Yearly Expenses Total")
+    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
+    
+    st.subheader("Yearly Financial Statement")
+    st.write(f"**Total Income:** ${yearly_income_total.sum():,.2f}")
+    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
+    st.write(f"**Net Profit:** ${yearly_income_total.sum() - yearly_expenses:,.2f}")
+
+# Saving and Uploading Work
+st.sidebar.header("Save/Upload Work")
+if st.sidebar.button("Download Current Income Data"):
+    csv = df_display_income.to_csv(index=False)
+    st.sidebar.download_button(label="Download Income CSV", data=csv, mime="text/csv", file_name=f"Income_{month_selected}_{year_selected}.csv")
+
+if st.sidebar.button("Download Current Expense Data"):
+    csv_exp = df_display_expenses.to_csv(index=False)
+    st.sidebar.download_button(label="Download Expenses CSV", data=csv_exp, mime="text/csv", file_name=f"Expenses_{month_selected}_{year_selected}.csv")
+
+# Option to upload data
+uploaded_file = st.sidebar.file_uploader("Upload Income CSV", type="csv")
+if uploaded_file is not None:
+    df_income_uploaded = pd.read_csv(uploaded_file)
+    st.session_state['data'][year_selected][month_selected]["Income"] = df_income_uploaded
+    st.success("Income data uploaded successfully!")
