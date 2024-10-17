@@ -13,7 +13,7 @@ months = [
 ]
 
 # Income categories
-income_categories = ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "Other Income"]
+income_categories = ["Taxable", "Non-tax", "CC", "Sales Tax", "FS", "Lottery", "Lotto", "Fuel Sales", "Fuel Gallons", "Rebates", "ATM", "OI"]
 
 # Sidebar for selecting year and month
 st.sidebar.header("Select Year and Month")
