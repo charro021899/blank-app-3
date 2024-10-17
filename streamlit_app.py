@@ -42,15 +42,17 @@ df_income = st.session_state['data'][year_selected][month_selected]["Income"]
 
 # Input data for each day across the income categories (days as rows, categories as columns)
 st.subheader("Input Daily Data (Days in Rows, Categories in Columns)")
-st.write("Enter data for each day across the income categories:")
 
-# Create input fields for each day
+# Remove extra labels and align inputs
 for idx, day in enumerate(df_income["Day"]):
-    st.write(f"### {day}")
     cols = st.columns(len(income_categories))  # Create columns for the categories
     for i, category in enumerate(income_categories):
         df_income.at[idx, category] = cols[i].number_input(
-            f"{category} for {day}", min_value=0, value=df_income.loc[idx, category], step=100, key=f"{category}_{day}_{month_selected}_{year_selected}"
+            label="",  # Empty label to avoid extra text
+            min_value=0, 
+            value=df_income.loc[idx, category], 
+            step=100, 
+            key=f"{category}_{day}_{month_selected}_{year_selected}"
         )
 
 # Display the income table with totals
