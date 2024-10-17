@@ -40,16 +40,13 @@ def calculate_totals(df_income):
 st.header(f"Income Data for {month_selected} {year_selected}")
 df_income = st.session_state['data'][year_selected][month_selected]["Income"]
 
-# Add column headers (Income categories) and row labels (Day 1, Day 2, etc.)
+# Input data for each day (Days as rows, Categories as columns)
 st.subheader("Input Daily Data")
 
-# Create the header with the income categories
-st.write("### Income Categories:")
-st.write(f"| {' | '.join(income_categories)} |")  # Show category headers as columns
-
-# Input data for each day (Day as rows, Categories as columns)
+# Input data for each day with the column headers for every day
 for idx, day in enumerate(df_income["Day"]):
     st.write(f"### {day}")  # Display Day label for the row
+    st.write("| " + " | ".join(income_categories) + " |")  # Display income categories above each day's inputs
     cols = st.columns(len(income_categories))  # Create columns for the categories
     for i, category in enumerate(income_categories):
         df_income.at[idx, category] = cols[i].number_input(
