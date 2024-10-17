@@ -174,10 +174,20 @@ with tab[3]:
     })
 
     # Loop through all months in the selected year and sum the data
-    for month in months:
-        if month in st.session_state['data'][year_selected]:
-            df_income = st.session_state['data'][year_selected][month]["Income"]
-            df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
+for month in months:
+    if month in st.session_state['data'][year_selected]:
+        df_income = st.session_state['data'][year_selected][month]["Income"]
+        df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
 
-            # Sum income for the month
-            monthly_income = calculate_income_tot
+        # Sum income for the month
+        monthly_income = calculate_income_totals(df_income)  # Fix this line
+        yearly_income = pd.concat([yearly_income, pd.DataFrame([monthly_income])], axis=1)
+
+        # Sum expenses for the month
+        monthly_expenses = df_expenses["Amount"].sum()
+        yearly_expenses += monthly_expenses
+
+        # Add CC, Sales Tax, Fuel Gallons, FS reference numbers
+        monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0)
+        reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
+
