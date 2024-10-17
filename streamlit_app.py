@@ -84,6 +84,17 @@ with tab[0]:
     df_display_income.loc['Total'] = df_display_income.sum(axis=0, numeric_only=True)
     st.dataframe(df_display_income)
 
+    # Download button for income CSV
+    csv_income = df_display_income.to_csv(index=False)
+    st.sidebar.download_button(label="Download Income CSV", data=csv_income, mime="text/csv", file_name=f"Income_{month_selected}_{year_selected}.csv")
+
+    # Upload button for income CSV
+    uploaded_income_file = st.sidebar.file_uploader("Upload Income CSV", type="csv")
+    if uploaded_income_file is not None:
+        df_income_uploaded = pd.read_csv(uploaded_income_file)
+        st.session_state['data'][year_selected][month_selected]["Income"] = df_income_uploaded
+        st.success("Income data uploaded successfully!")
+
 ### EXPENSES SECTION ###
 with tab[1]:
     st.header(f"Expenses Data for {month_selected} {year_selected}")
@@ -106,6 +117,17 @@ with tab[1]:
     total_expenses = df_display_expenses["Amount"].sum()
     df_display_expenses.loc['Total'] = ["Total Expenses", total_expenses]
     st.dataframe(df_display_expenses)
+
+    # Download button for expenses CSV
+    csv_expenses = df_display_expenses.to_csv(index=False)
+    st.sidebar.download_button(label="Download Expenses CSV", data=csv_expenses, mime="text/csv", file_name=f"Expenses_{month_selected}_{year_selected}.csv")
+
+    # Upload button for expenses CSV
+    uploaded_expenses_file = st.sidebar.file_uploader("Upload Expenses CSV", type="csv")
+    if uploaded_expenses_file is not None:
+        df_expenses_uploaded = pd.read_csv(uploaded_expenses_file)
+        st.session_state['data'][year_selected][month_selected]["Expenses"] = df_expenses_uploaded
+        st.success("Expenses data uploaded successfully!")
 
 ### SUMMARY SECTION ###
 with tab[2]:
@@ -158,32 +180,4 @@ with tab[3]:
             df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
 
             # Sum income for the month
-            monthly_income = calculate_income_totals(df_income)
-            yearly_income = pd.concat([yearly_income, pd.DataFrame([monthly_income])], axis=1)
-
-            # Sum expenses for the month
-            monthly_expenses = df_expenses["Amount"].sum()
-            yearly_expenses += monthly_expenses
-
-            # Add CC, Sales Tax, Fuel Gallons, FS reference numbers
-            monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0)
-            reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
-
-    # Calculate yearly totals
-    yearly_income_total = yearly_income.sum(axis=1)
-    reference_totals_total = reference_totals.sum(axis=1)
-
-    # Display yearly income totals
-    st.subheader("Yearly Income Totals")
-    st.write(yearly_income_total)
-
-    # Display reference numbers (CC, Sales Tax, Fuel Gallons, FS)
-    st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons, FS)")
-    st.write(reference_totals_total)
-
-    # Display yearly expense totals
-    st.subheader("Yearly Expense Totals")
-    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
-
-    # Display yearly financial summary
-    st.subheader
+            monthly_income = calculate_income_tot
