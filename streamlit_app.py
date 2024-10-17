@@ -174,20 +174,40 @@ with tab[3]:
     })
 
     # Loop through all months in the selected year and sum the data
-for month in months:
-    if month in st.session_state['data'][year_selected]:
-        df_income = st.session_state['data'][year_selected][month]["Income"]
-        df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
+    for month in months:
+        if month in st.session_state['data'][year_selected]:
+            df_income = st.session_state['data'][year_selected][month]["Income"]
+            df_expenses = st.session_state['data'][year_selected][month]["Expenses"]
 
-        # Sum income for the month
-        monthly_income = calculate_income_totals(df_income)  # Fix this line
-        yearly_income = pd.concat([yearly_income, pd.DataFrame([monthly_income])], axis=1)
+            # Sum income for the month
+            monthly_income = calculate_income_totals(df_income)  # Corrected line
+            yearly_income = pd.concat([yearly_income, pd.DataFrame([monthly_income])], axis=1)
 
-        # Sum expenses for the month
-        monthly_expenses = df_expenses["Amount"].sum()
-        yearly_expenses += monthly_expenses
+            # Sum expenses for the month
+            monthly_expenses = df_expenses["Amount"].sum()
+            yearly_expenses += monthly_expenses
 
-        # Add CC, Sales Tax, Fuel Gallons, FS reference numbers
-        monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0)
-        reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
+            # Add CC, Sales Tax, Fuel Gallons, FS reference numbers
+            monthly_reference = df_income[["CC", "Sales Tax", "Fuel Gallons", "FS"]].sum(axis=0)
+            reference_totals = pd.concat([reference_totals, pd.DataFrame([monthly_reference])], axis=1)
 
+    # Calculate yearly totals
+    yearly_income_total = yearly_income.sum(axis=1)
+    reference_totals_total = reference_totals.sum(axis=1)
+
+    # Display yearly income totals
+    st.subheader("Yearly Income Totals")
+    st.write(yearly_income_total)
+
+    # Display reference numbers (CC, Sales Tax, Fuel Gallons, FS)
+    st.subheader("Yearly Reference Numbers (CC, Sales Tax, Fuel Gallons, FS)")
+    st.write(reference_totals_total)
+
+    # Display yearly expense totals
+    st.subheader("Yearly Expense Totals")
+    st.write(f"**Total Expenses:** ${yearly_expenses:,.2f}")
+
+    # Display yearly financial summary
+    st.subheader("Yearly Financial Summary")
+    st.write(f"**Total Income:** ${yearly_income_total.sum():,.2f}")
+    st.write(f"**Net Profit:** ${yearly_income_total.sum() - yearly_expenses:,.2f}")
